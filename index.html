@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intune Patching &amp; OS Compliance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="light">
+<!-- Header -->
+<header class="header" id="header">
+  <div class="header-left">
+    <svg class="logo" viewBox="0 0 32 32" width="32" height="32" aria-label="Dashboard logo">
+      <rect x="2" y="2" width="12" height="12" rx="2" fill="currentColor" opacity="0.9"/>
+      <rect x="18" y="2" width="12" height="12" rx="2" fill="currentColor" opacity="0.5"/>
+      <rect x="2" y="18" width="12" height="12" rx="2" fill="currentColor" opacity="0.5"/>
+      <rect x="18" y="18" width="12" height="12" rx="2" fill="currentColor" opacity="0.3"/>
+    </svg>
+    <h1 class="header-title">Intune Patching &amp; OS Compliance Dashboard</h1>
+    <span class="header-version">v1.1</span>
+  </div>
+  <div class="header-right">
+    <span class="refresh-badge" id="refreshBadge" title="Auto-refresh active">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      <span id="refreshText">Auto-refresh: 24h</span>
+    </span>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+      <svg id="sunIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      <svg id="moonIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav class="sidebar" id="sidebar">
+  <button class="nav-btn active" data-tab="executive">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Executive Summary
+  </button>
+  <button class="nav-btn" data-tab="patch">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+    Patch Compliance
+  </button>
+  <button class="nav-btn" data-tab="windows">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+    Windows Versions
+  </button>
+  <button class="nav-btn" data-tab="lifecycle">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    OS Lifecycle
+  </button>
+  <div class="nav-separator"></div>
+  <div class="upload-section">
+    <p class="upload-label">Upload Data</p>
+    <label class="upload-btn" for="patchFile">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Patch Export
+    </label>
+    <input type="file" id="patchFile" accept=".csv" hidden>
+    <span class="file-status" id="patchStatus">No file loaded</span>
+
+    <label class="upload-btn" for="windowsFile">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Windows Inventory
+    </label>
+    <input type="file" id="windowsFile" accept=".csv" hidden>
+    <span class="file-status" id="windowsStatus">No file loaded</span>
+
+    <button class="analyse-btn" id="analyseBtn" disabled>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Analyse Uploaded Files
+    </button>
+  </div>
+  <div class="nav-separator"></div>
+  <div class="lifecycle-info">
+    <p class="lifecycle-label">Lifecycle Source</p>
+    <p class="lifecycle-source" id="lifecycleSource">Microsoft Learn</p>
+    <p class="lifecycle-updated" id="lifecycleUpdated"></p>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<main class="main" id="main">
+  <!-- Alert Banner -->
+  <div class="alert-banner" id="alertBanner" style="display:none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    <span id="alertBannerText"></span>
+    <button class="alert-dismiss" id="alertDismiss">&times;</button>
+  </div>
+
+  <!-- Patch Tab -->
+  <div class="tab-content" id="tab-patch">
+    <div class="empty-state" id="patchEmpty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <h2>Patch Compliance</h2>
+      <p>Upload a Quality Update Status CSV export from Intune to get started.</p>
+    </div>
+    <div id="patchContent" style="display:none">
+      <div class="kpi-grid" id="patchKpis"></div>
+      <div class="chart-row">
+        <div class="chart-card" id="complianceChartCard">
+          <div class="chart-header">
+            <h3>Compliance by State</h3>
+            <button class="export-btn" data-export="complianceState">Export CSV</button>
+          </div>
+          <div class="chart-container"><canvas id="complianceChart"></canvas></div>
+        </div>
+        <div class="chart-card" id="ringChartCard">
+          <div class="chart-header">
+            <h3>Alerts by Ring</h3>
+            <button class="export-btn" data-export="alertsByRing">Export CSV</button>
+          </div>
+          <div class="chart-container"><canvas id="ringChart"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-row">
+        <div class="chart-card" id="groupChartCard">
+          <div class="chart-header">
+            <h3>Non-Compliant Devices by Ring</h3>
+            <button class="export-btn" data-export="alertsByGroup">Export CSV</button>
+          </div>
+          <div class="chart-container"><canvas id="groupChart"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="chart-header">
+          <h3>Patch Exception Devices</h3>
+          <button class="export-btn" data-export="patchExceptions">Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table id="patchExceptionTable">
+            <thead><tr><th>Device</th><th>Business Group</th><th>Ring</th><th>Status</th><th>Alert Count</th><th>OS Build</th></tr></thead>
+            <tbody id="patchExceptionBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Windows Tab -->
+  <div class="tab-content" id="tab-windows">
+    <div class="empty-state" id="windowsEmpty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      <h2>Windows Versions</h2>
+      <p>Upload a Devices with Inventory CSV export to get started.</p>
+    </div>
+    <div id="windowsContent" style="display:none">
+      <div class="kpi-grid" id="windowsKpis"></div>
+      <div class="chart-row">
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Version Compliance</h3>
+            <button class="export-btn" data-export="versionCompliance">Export CSV</button>
+          </div>
+          <div class="chart-container"><canvas id="versionChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <h3>Lifecycle Posture</h3>
+            <button class="export-btn" data-export="lifecyclePosture">Export CSV</button>
+          </div>
+          <div class="chart-container"><canvas id="lifecycleChart"></canvas></div>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="chart-header">
+          <h3>Windows Device Review</h3>
+          <button class="export-btn" data-export="windowsExceptions">Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table id="windowsExceptionTable">
+            <thead><tr><th>Device</th><th>OS Version</th><th>Build</th><th>Support Status</th><th>End of Support</th><th>Last Check-in</th><th>Risk</th></tr></thead>
+            <tbody id="windowsExceptionBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive Tab -->
+  <div class="tab-content active" id="tab-executive">
+    <div class="empty-state" id="execEmpty">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <h2>Executive Summary</h2>
+      <p>Upload data files to generate the executive view.</p>
+    </div>
+    <div id="execContent" style="display:none">
+      <div class="exec-headline" id="execHeadline"></div>
+      <div class="exec-grid">
+        <div class="exec-card" id="priorityActions">
+          <h3>Priority Actions</h3>
+          <div id="priorityList"></div>
+        </div>
+        <div class="exec-card" id="regionalRisk">
+          <h3>Risk by OS Version</h3>
+          <div class="chart-container"><canvas id="regionalChart"></canvas></div>
+        </div>
+      </div>
+      <div class="exec-grid">
+        <div class="exec-card" id="deviceConnectivity">
+          <h3>Device Connectivity</h3>
+          <div id="connectivityGrid"></div>
+          <button class="export-btn" data-export="staleDevices" style="margin-top:12px">Export Stale Devices CSV</button>
+        </div>
+        <div class="exec-card" id="patchAdjusted">
+          <h3>Adjusted Patch Compliance</h3>
+          <div id="adjustedGrid"></div>
+        </div>
+      </div>
+      <div class="exec-grid">
+        <div class="exec-card" id="isoEvidence">
+          <h3>ISO 27001 Evidence Checklist</h3>
+          <div id="isoGrid"></div>
+          <button class="export-btn" data-export="isoEvidence" style="margin-top:12px">Export ISO CSV</button>
+        </div>
+        <div class="exec-card" id="eosAlerts">
+          <h3>End-of-Support Alerts</h3>
+          <div id="eosAlertList"></div>
+          <button class="export-btn" data-export="eosAlertDevices" style="margin-top:12px">Export Affected Devices CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lifecycle Tab -->
+  <div class="tab-content" id="tab-lifecycle">
+    <div class="lifecycle-page">
+      <div class="lifecycle-header-section">
+        <h2>Windows Product Lifecycle Reference</h2>
+        <p>Data sourced from <a href="https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information" target="_blank" rel="noopener">Microsoft Learn</a>. Dashboard checks lifecycle status on every data load and auto-refreshes every 24 hours.</p>
+      </div>
+      <div class="table-card">
+        <div class="chart-header">
+          <h3>Windows 11 Lifecycle</h3>
+          <button class="export-btn" data-export="win11Lifecycle">Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table id="win11LifecycleTable">
+            <thead>
+              <tr>
+                <th>Version</th><th>Edition</th><th>Availability</th><th>End of Support</th><th>Days Remaining</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="win11LifecycleBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="table-card">
+        <div class="chart-header">
+          <h3>Windows 10 Lifecycle</h3>
+          <button class="export-btn" data-export="win10Lifecycle">Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table id="win10LifecycleTable">
+            <thead>
+              <tr>
+                <th>Version</th><th>Edition</th><th>End of Support</th><th>ESU End Date</th><th>Days Remaining</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="win10LifecycleBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Unsupported OS Card -->
+      <div class="kpi-grid" style="margin-top:24px">
+        <div class="kpi-card kpi-red" id="unsupportedOsCard">
+          <div class="kpi-value" id="unsupportedOsCount">&mdash;</div>
+          <div class="kpi-label">Unsupported OS Devices</div>
+          <button class="export-btn kpi-export" id="unsupportedOsExport" data-export="unsupportedOS">Export CSV</button>
+        </div>
+        <div class="kpi-card kpi-amber" id="nearingEosCard">
+          <div class="kpi-value" id="nearingEosCount">&mdash;</div>
+          <div class="kpi-label">Nearing End of Support (12 months)</div>
+          <button class="export-btn kpi-export" id="nearingEosExport" data-export="nearingEOS">Export CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-left">
+    <span class="footer-brand">Intune Patching &amp; OS Compliance Dashboard</span>
+    <span class="footer-sep">&middot;</span>
+    <span>Created by Darren Reevell</span>
+  </div>
+  <div class="footer-right">
+    <span class="footer-confidential">Confidential &mdash; For internal use only</span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
+<script src="lifecycle.js?v=1.1"></script>
+<script src="dashboard.js?v=1.1"></script>
+</body>
+</html>
