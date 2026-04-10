@@ -1,135 +1,210 @@
 # Intune Patching & OS Compliance Dashboard
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Author:** Darren Reevell  
-**Classification:** Confidential — For internal use only
+**Classification:** Confidential — For internal use only  
+**Live Dashboard:** https://greebo-labs.github.io/intune-patching-os-compliance-dashboard/
 
 ---
 
 ## Overview
 
-A browser-based patching and OS compliance dashboard that ingests CSV exports from Microsoft Intune and presents executive governance, patch compliance, Windows OS lifecycle posture, and audit-ready evidence views. All data is processed locally in the browser — no data leaves the device.
+A browser-based compliance dashboard that ingests two CSV exports from Microsoft Intune and produces executive governance, patch compliance, Windows OS lifecycle posture, and audit-ready evidence views.
 
-## Features
+All data is processed **locally in your browser** — no data is sent to any external service.
 
-| Tab | Description |
-|-----|-------------|
-| **Executive Summary** | Leadership headline with patch and lifecycle posture. Priority actions, risk by OS version chart, ISO 27001 evidence checklist (A.8.1, A.8.8, A.12.6), and end-of-support alerts. |
-| **Patch Compliance** | KPIs for total devices, compliance percentage, up-to-date and non-compliant counts, alerted devices, and high-risk devices. Charts for compliance state, alerts by ring, and non-compliant devices by deployment ring. Patch exception device table. |
-| **Windows Versions** | KPIs for supported OS percentage, nearing end-of-support, unsupported OS, and current/supported counts. Version compliance bar chart, lifecycle posture doughnut, and device review table with risk ratings. |
-| **OS Lifecycle** | Windows 11 and Windows 10 lifecycle reference tables sourced from Microsoft Learn. Unsupported OS and nearing-end-of-support device counts with CSV export. |
+---
 
-### Additional Capabilities
+## Quick Start
 
-- **CSV Export** on every KPI card, chart, and table
-- **Light and dark mode** with toggle (light mode default)
-- **Auto-refresh** every 24 hours to re-evaluate lifecycle status
-- **End-of-support alerts** banner when devices are running unsupported OS versions
-- **Microsoft lifecycle integration** using verified end-of-support dates from Microsoft Learn
+1. Go to the [live dashboard](https://greebo-labs.github.io/intune-patching-os-compliance-dashboard/)
+2. Export the two CSV files from Intune (see steps below)
+3. Upload the files using the sidebar controls
+4. Click **Analyse Uploaded Files**
 
-## Data Sources
+---
 
-The dashboard accepts two CSV files exported from Microsoft Intune:
+## Step 1 — Export the Patch Status File from Intune
 
-### 1. Quality Update Status Export (Patch tab)
+This file contains patch compliance data for all devices.
 
-Export from **Intune > Reports > Windows Updates > Quality Update Status**.
+1. Sign in to the [Microsoft Intune admin centre](https://intune.microsoft.com)
+2. Go to **Reports** → **Windows updates** → **Reports** tab
+3. Click **Quality update status**
+4. Click **Generate report** (or open an existing report)
+5. Once generated, click **Export** → **Export to CSV**
+6. Save the file — name it something like `Patch_Status_07April2026.csv`
 
-Expected columns (flexible matching):
-- `DeviceName` / `Device name`
-- `QUStatusLevel1Name` — values: `Up To Date`, `Not Up To Date`
-- `AlertCount`
-- `DeploymentGroupName` / `Ring`
-- `BusinessGroupName`
-- `OSBuild`
-- `UserPrincipalName`
+**What this file contains:** Device name, deployment ring, patch status (Up To Date / Not Up To Date), alert count, OS build, Extended Security update enrolment, hotpatch readiness.
 
-### 2. Devices with Inventory Export (Windows tab)
+---
 
-Export from **Intune > Reports > Device compliance > DevicesWithInventory**.
+## Step 2 — Export the Device Inventory File from Intune
 
-Expected columns (flexible matching):
-- `DeviceName` / `Device name`
-- `OSVersion` / `OS version` — format: `10.0.XXXXX.YYYY`
-- `OS` — typically `Windows`
-- `UserPrincipalName` / `User principal name`
-- `LastContact` / `Last check-in`
-- `SerialNumber` / `Serial number`
-- `Manufacturer`, `Model`
+This file contains device inventory data including OS version and last check-in date.
 
-The dashboard maps OS build numbers to Windows release versions automatically:
+1. In the [Intune admin centre](https://intune.microsoft.com), go to **Devices** → **All devices**
+2. Click **Export** at the top of the device list
+3. Select **Export (CSV)** — this downloads all device inventory data
+4. Save the file — name it something like `Inventory_07April2026.csv`
 
-| Build | Version |
-|-------|---------|
-| 28000 | Windows 11 26H1 |
-| 26200 | Windows 11 25H2 |
-| 26100 | Windows 11 24H2 |
-| 22631 | Windows 11 23H2 |
-| 22621 | Windows 11 22H2 |
-| 22000 | Windows 11 21H2 |
-| 19045 | Windows 10 22H2 |
-| 17763 | Windows 10 1809 |
-| 14393 | Windows 10 1607 |
+Alternatively, for a more detailed inventory export:
 
-## Windows Lifecycle Dates
+1. Go to **Reports** → **Device compliance** → **Reports** tab
+2. Click **Device compliance** or **Devices with inventory**
+3. Generate and export as CSV
 
-Verified against [Microsoft Learn — Windows 11 Release Information](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information) on 7 April 2026.
+**What this file contains:** Device name, Azure AD Device ID, OS version (in `10.0.XXXXX.YYYY` format), last contact date, serial number, manufacturer, model, compliance state.
 
-| Version | Home / Pro EOS | Enterprise / Education EOS |
-|---------|---------------|---------------------------|
-| Windows 11 26H1 | 14 March 2028 | 13 March 2029 |
-| Windows 11 25H2 | 12 October 2027 | 10 October 2028 |
-| Windows 11 24H2 | 13 October 2026 | 12 October 2027 |
-| Windows 11 23H2 | 11 November 2025 | 10 November 2026 |
-| Windows 10 22H2 | 14 October 2025 | 14 October 2025 |
+---
 
-## How to Use
+## Step 3 — Open the Dashboard
 
-1. Open the dashboard in a modern browser (Edge, Chrome, Firefox).
-2. Click **Patch Export** in the sidebar and select the Quality Update Status CSV.
-3. Click **Windows Inventory** and select the DevicesWithInventory CSV.
-4. Click **Analyse Uploaded Files**.
-5. Navigate between tabs using the sidebar.
-6. Use **Export CSV** buttons to download filtered device lists.
-7. Toggle dark mode using the button in the top-right corner.
+**Option A — Live (recommended):** Open [greebo-labs.github.io/intune-patching-os-compliance-dashboard](https://greebo-labs.github.io/intune-patching-os-compliance-dashboard/) in Microsoft Edge or Google Chrome.
+
+**Option B — Local:** Download the repository as a ZIP, extract it, and open `index.html` in Edge or Chrome.
+
+---
+
+## Step 4 — Upload and Analyse
+
+1. In the left-hand sidebar, click **Patch Export** and select your patch status CSV
+2. Click **Windows Inventory** and select your device inventory CSV
+3. Click the blue **Analyse Uploaded Files** button
+4. Wait a few seconds — the dashboard populates all tabs automatically
+
+> **Note:** The inventory file can be large (20–30 MB). It may take 5–10 seconds to process. Do not close the tab during this time.
+
+---
+
+## Step 5 — Navigate the Dashboard
+
+| Tab | What it shows |
+|-----|--------------|
+| **Executive Summary** | Leadership headline, priority actions, stale device connectivity report, adjusted patch compliance (excl. stale devices), ISO 27001 evidence, end-of-support alerts |
+| **Patch Compliance** | Total devices, compliance %, Up to Date / Not Up to Date counts, alerted devices, high-risk devices, alerts by ring, non-compliant devices by ring, patch exception table |
+| **Windows Versions** | Supported OS %, ESU enrolled count, nearing end-of-support count, unsupported OS count, stale devices, version compliance chart, lifecycle posture chart, device review table |
+| **OS Lifecycle** | Windows 11 and Windows 10 lifecycle reference tables (Enterprise/Education dates), ESU coverage dates, unsupported OS device count with CSV export |
+
+---
+
+## Step 6 — Export Data
+
+Every KPI card, chart, and table has an **Export CSV** button. Click it to download the underlying device data as a CSV file that can be opened in Excel.
+
+Key exports:
+- **Patch Compliance** → exports all devices by status
+- **Unsupported OS Devices** → full device list with end-of-support dates
+- **Nearing End of Support** → devices within 12 months of EOS
+- **Stale Devices** → devices not checked in for 30+ days
+- **Export ISO CSV** → ISO 27001 evidence summary
+
+---
+
+## Understanding the Data
+
+### Lifecycle Dates
+
+The dashboard uses **Enterprise/Education** edition lifecycle dates for all Windows versions, appropriate for a managed corporate estate:
+
+| Version | Enterprise/Education EOS | Status (April 2026) |
+|---------|--------------------------|---------------------|
+| Windows 11 26H1 | 13 March 2029 | Supported |
+| Windows 11 25H2 | 10 October 2028 | Supported |
+| Windows 11 24H2 | **12 October 2027** | Supported |
+| Windows 11 23H2 | 10 November 2026 | Nearing EOS |
+| Windows 10 22H2 | 14 October 2025 | ESU Year 1 (until Oct 2026) |
+
+### ESU (Extended Security Updates)
+
+Devices running Windows 10 22H2 that are enrolled in the ESU programme are shown as **ESU (Enrolled)** with a green badge and counted as in-support. The ESU enrolment status is read from the `ExtendedSecurity` column in the patch export (value: `Enrolled`).
+
+### Stale Devices
+
+Any device with no Intune check-in for **30 or more days** is flagged as stale. Stale devices are highlighted in red in the Windows Device Review table. Patch compliance figures are shown both including and excluding stale devices, since stale data may not reflect the current device state.
+
+### Supported OS Percentage
+
+Counts all devices that are NOT "Out of support" — i.e. Supported + Nearing EOS + ESU Enrolled are all included. Only genuinely out-of-support and unknown devices are excluded.
+
+---
+
+## Updating the Dashboard
+
+When you have new Intune exports:
+1. Open the dashboard
+2. Click **Patch Export** and select the new patch CSV
+3. Click **Windows Inventory** and select the new inventory CSV
+4. Click **Analyse Uploaded Files**
+
+The previous data is replaced automatically.
+
+---
+
+## Keeping Lifecycle Data Current
+
+Microsoft publishes lifecycle dates at [Microsoft Learn — Windows Release Health](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information).
+
+When Microsoft releases a new Windows version or an existing version goes out of support, update `lifecycle.js`:
+
+1. Open `lifecycle.js` in the repository
+2. Add the new version to the `windows11` or `windows10` array with correct edition end dates
+3. Add the build number to the `buildMap` object (e.g. `'26100': { os: 'Windows 11', version: '24H2' }`)
+4. Update the `lastUpdated` field
+
+---
+
+## Browser Compatibility
+
+| Browser | Status |
+|---------|--------|
+| Microsoft Edge (Chromium) | ✅ Recommended |
+| Google Chrome | ✅ Supported |
+| Mozilla Firefox | ✅ Supported |
+| Safari | ✅ Supported |
+| Internet Explorer | ❌ Not supported |
+
+---
+
+## Security & Privacy
+
+- All CSV data is processed locally in the browser
+- No data is transmitted to any external service
+- No cookies, local storage, or tracking of any kind
+- The Content Security Policy blocks all outbound network requests except for the Chart.js library (loaded from jsDelivr CDN with integrity verification)
+
+---
 
 ## File Structure
 
 ```
-intune-dashboard/
-├── index.html        Main dashboard page
-├── styles.css        Stylesheet
-├── dashboard.js      Core logic, CSV parsing, rendering
-├── lifecycle.js      Windows lifecycle reference data and mapping
+intune-patching-os-compliance-dashboard/
+├── index.html        Main dashboard page (no inline event handlers)
+├── styles.css        Stylesheet — light/dark mode
+├── dashboard.js      Core logic, CSV parsing, rendering, exports
+├── lifecycle.js      Windows lifecycle reference data and build mapping
 └── README.md         This file
 ```
 
-## Updating Lifecycle Data
+---
 
-When Microsoft releases a new Windows version or an existing version reaches end of support, update the `LIFECYCLE_DATA` object in `lifecycle.js`:
+## Troubleshooting
 
-1. Add the new version to the `windows11` or `windows10` array with edition-specific end-of-support dates.
-2. Add the build number mapping to the `buildMap` object.
-3. Update the `lastUpdated` field to the current date.
+**Nothing happens when I click buttons**  
+Make sure you're opening the file in Edge or Chrome, not Internet Explorer. If using the local version, try pressing **Ctrl + Shift + R** to hard-reload.
 
-Source: [Microsoft Learn — Windows Release Health](https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information)
+**The inventory file takes a long time to load**  
+The DevicesWithInventory export can be 20–30 MB. This is normal. Leave the tab open and wait up to 30 seconds.
 
-## Browser Compatibility
+**Charts or tables are blank after clicking Analyse**  
+Check that you've selected the correct files — the patch CSV should be the Quality Update Status export, and the inventory CSV should be the DevicesWithInventory export. Swapping them will produce blank results.
 
-Tested on:
-- Microsoft Edge (Chromium)
-- Google Chrome
-- Mozilla Firefox
+**Supported OS % looks wrong**  
+The dashboard classifies all devices whose OS build cannot be mapped to a known Windows version as "Out of support". This can happen with very old, pre-release, or non-standard builds. Export the "Unknown" KPI to see which devices are affected.
 
-Requires JavaScript enabled. No server required — runs entirely client-side.
-
-## Security and Privacy
-
-- All CSV data is processed locally in the browser.
-- No data is transmitted to any external service.
-- No cookies or local storage are used.
-- The dashboard is suitable for environments handling sensitive device inventory data.
+**Windows 11 24H2 shows as "Nearing end of support"**  
+This means you're running an older version of the dashboard. Download the latest files from this repository — the v1.1 build uses Enterprise/Education dates, so 24H2 correctly shows as Supported until 12 October 2027.
 
 ---
 
-**Confidential — For internal use only**
+*For questions or issues, contact Darren Reevell.*
