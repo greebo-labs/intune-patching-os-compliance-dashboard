@@ -2,7 +2,7 @@
 
 **Version:** 1.1  
 **Author:** Darren Reevell  
-**Classification:** Confidential — For internal use only  
+**Classification:**  — Public release (use at own risk)  
 **Live Dashboard:** https://greebo-labs.github.io/intune-patching-os-compliance-dashboard/
 
 ---
