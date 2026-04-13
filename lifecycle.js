@@ -12,7 +12,6 @@ const LIFECYCLE_DATA = {
   lastUpdated: '2026-04-07',
   sourceUrl: 'https://learn.microsoft.com/en-us/windows/release-health/windows11-release-information',
 
-  // Windows 11 versions
   windows11: [
     {
       version: '26H1',
@@ -64,7 +63,6 @@ const LIFECYCLE_DATA = {
     }
   ],
 
-  // Windows 11 LTSC
   windows11LTSC: [
     {
       version: '24H2 LTSC',
@@ -76,17 +74,20 @@ const LIFECYCLE_DATA = {
     }
   ],
 
-  // Windows 10
   windows10: [
     {
       version: '22H2',
       editions: [
-        { edition: 'Home / Pro / Enterprise / Education', endOfSupport: '2025-10-14', esu: [
-          { year: 1, edition: 'Consumer (Home / Pro)', endDate: '2026-10-13' },
-          { year: 1, edition: 'Enterprise / Education', endDate: '2026-10-13' },
-          { year: 2, edition: 'Enterprise / Education', endDate: '2027-10-12' },
-          { year: 3, edition: 'Enterprise / Education', endDate: '2028-10-10' }
-        ]}
+        {
+          edition: 'Home / Pro / Enterprise / Education',
+          endOfSupport: '2025-10-14',
+          esu: [
+            { year: 1, edition: 'Consumer (Home / Pro)', endDate: '2026-10-13' },
+            { year: 1, edition: 'Enterprise / Education', endDate: '2026-10-13' },
+            { year: 2, edition: 'Enterprise / Education', endDate: '2027-10-12' },
+            { year: 3, edition: 'Enterprise / Education', endDate: '2028-10-10' }
+          ]
+        }
       ]
     },
     {
@@ -110,22 +111,19 @@ const LIFECYCLE_DATA = {
     }
   ],
 
-  // Windows 11 ESU dates (Enterprise/Education only)
   windows11ESU: {
     '23H2': { edition: 'Enterprise / Education', endDate: '2026-11-10' },
     '24H2': { edition: 'Enterprise / Education', endDate: '2027-10-12' }
   },
 
-  // Build-to-version mapping for matching Intune exports
   buildMap: {
-    // Windows 11
     '26100': { os: 'Windows 11', version: '24H2' },
     '22631': { os: 'Windows 11', version: '23H2' },
     '22621': { os: 'Windows 11', version: '22H2' },
     '22000': { os: 'Windows 11', version: '21H2' },
     '26200': { os: 'Windows 11', version: '25H2' },
     '28000': { os: 'Windows 11', version: '26H1' },
-    // Windows 10
+
     '19045': { os: 'Windows 10', version: '22H2' },
     '19044': { os: 'Windows 10', version: '21H2' },
     '19043': { os: 'Windows 10', version: '21H1' },
@@ -142,18 +140,12 @@ const LIFECYCLE_DATA = {
   }
 };
 
-/**
- * Determine the support status of a given OS + version.
- * Returns { status, endDate, daysRemaining, risk }
- *   status: 'Supported' | 'Nearing end of support' | 'Out of support'
- *   risk: 'green' | 'amber' | 'red'
- */
 function getLifecycleStatus(osName, version, editionHint) {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Default to Enterprise/Education for managed corporate estates
-  const isEnterprise = !editionHint || /enterprise|education|iot|ltsc|ltsb/i.test(editionHint);
+  const normalizedEdition = String(editionHint || '').trim();
+  const isEnterprise = !normalizedEdition || /enterprise|education|iot|ltsc|ltsb/i.test(normalizedEdition);
 
   let entries = [];
 
@@ -171,7 +163,6 @@ function getLifecycleStatus(osName, version, editionHint) {
     return { status: 'Unknown', endDate: null, daysRemaining: null, risk: 'amber' };
   }
 
-  // Pick Enterprise/Education edition by default (managed estate)
   let entry;
   if (isEnterprise) {
     entry = entries.find(e => /enterprise|education|iot/i.test(e.edition)) || entries[0];
@@ -183,12 +174,12 @@ function getLifecycleStatus(osName, version, editionHint) {
   const daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
 
   let status, risk, esuInfo = null;
+
   if (daysRemaining < 0) {
-    // Check if covered by ESU
-    esuInfo = getESUCoverage(osName, version, today);
+    esuInfo = getESUCoverage(osName, version, today, normalizedEdition);
     if (esuInfo) {
       status = 'ESU (' + esuInfo.label + ')';
-      risk = 'amber';
+      risk = esuInfo.daysRemaining <= 365 ? 'amber' : 'green';
     } else {
       status = 'Out of support';
       risk = 'red';
@@ -201,66 +192,82 @@ function getLifecycleStatus(osName, version, editionHint) {
     risk = 'green';
   }
 
-  return { status, endDate: entry.endOfSupport, daysRemaining, risk, esuInfo };
+  return {
+    status,
+    endDate: esuInfo ? esuInfo.endDate : entry.endOfSupport,
+    daysRemaining: esuInfo ? esuInfo.daysRemaining : daysRemaining,
+    risk,
+    esuInfo
+  };
 }
 
-/**
- * Check if a version has active ESU coverage.
- * Returns { label, endDate, daysRemaining } or null.
- */
-function getESUCoverage(osName, version, today) {
-  // Windows 10 22H2 ESU
+function getESUCoverage(osName, version, today, editionHint) {
+  const normalizedEdition = String(editionHint || '').trim();
+  const wantsEnterprise = !normalizedEdition || /enterprise|education|iot|ltsc|ltsb/i.test(normalizedEdition);
+  const wantsConsumer = /home|pro/i.test(normalizedEdition) && !wantsEnterprise;
+
   if (/windows\s*10/i.test(osName) && version === '22H2') {
     const entry = LIFECYCLE_DATA.windows10.find(v => v.version === '22H2');
-    if (entry && entry.editions[0] && entry.editions[0].esu) {
-      // Find the latest active ESU year
-      for (let i = entry.editions[0].esu.length - 1; i >= 0; i--) {
-        const esu = entry.editions[0].esu[i];
-        const esuEnd = new Date(esu.endDate);
-        const esuDays = Math.ceil((esuEnd - today) / (1000 * 60 * 60 * 24));
-        if (esuDays >= 0) {
-          return { label: 'Year ' + esu.year, endDate: esu.endDate, daysRemaining: esuDays, edition: esu.edition };
-        }
+    const esuList = entry?.editions?.[0]?.esu || [];
+
+    const eligible = esuList.filter(esu => {
+      if (wantsEnterprise) return /enterprise|education/i.test(esu.edition);
+      if (wantsConsumer) return /consumer|home|pro/i.test(esu.edition);
+      return false;
+    });
+
+    for (let i = eligible.length - 1; i >= 0; i--) {
+      const esu = eligible[i];
+      const esuEnd = new Date(esu.endDate);
+      const esuDays = Math.ceil((esuEnd - today) / (1000 * 60 * 60 * 24));
+      if (esuDays >= 0) {
+        return {
+          label: 'Year ' + esu.year,
+          endDate: esu.endDate,
+          daysRemaining: esuDays,
+          edition: esu.edition
+        };
       }
     }
   }
-  // Windows 11 versions with ESU
+
   if (/windows\s*11/i.test(osName) && LIFECYCLE_DATA.windows11ESU[version]) {
+    if (!wantsEnterprise) return null;
+
     const esu = LIFECYCLE_DATA.windows11ESU[version];
     const esuEnd = new Date(esu.endDate);
     const esuDays = Math.ceil((esuEnd - today) / (1000 * 60 * 60 * 24));
+
     if (esuDays >= 0) {
-      return { label: 'Ent/Edu', endDate: esu.endDate, daysRemaining: esuDays, edition: esu.edition };
+      return {
+        label: 'Ent/Edu',
+        endDate: esu.endDate,
+        daysRemaining: esuDays,
+        edition: esu.edition
+      };
     }
   }
+
   return null;
 }
 
-/**
- * Map a build number to OS name + version.
- * Handles multiple formats:
- *   - "10.0.19045.5371" (Intune OSVersion format)
- *   - "19045.5371" (OSBuild format)
- *   - "19045" (bare build number)
- */
 function buildToVersion(buildStr) {
   if (!buildStr) return null;
   const s = String(buildStr).trim();
   const parts = s.split('.');
 
-  // Format: 10.0.XXXXX.YYYY — Intune OSVersion
   if (parts.length === 4 && parts[0] === '10' && parts[1] === '0') {
     const major = parts[2];
     return LIFECYCLE_DATA.buildMap[major] || null;
   }
-  // Format: XXXXX.YYYY — OSBuild
+
   if (parts.length === 2 && parts[0].length >= 4) {
     return LIFECYCLE_DATA.buildMap[parts[0]] || null;
   }
-  // Format: XXXXX — bare build number
+
   if (parts.length === 1 && s.length >= 4) {
     return LIFECYCLE_DATA.buildMap[s] || null;
   }
-  // Fallback: try first part
+
   return LIFECYCLE_DATA.buildMap[parts[0]] || null;
 }
